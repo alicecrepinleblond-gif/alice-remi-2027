@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alice &amp; Rémi · 22.05.2027</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --coral:#FF6B6B; --rose:#E8365D; --fuchsia:#C0155A; --deep:#9B1360; --dark:#3a1020;
+      --cream:#fff8f5; --blush:#f5ece8;
+    }
+
+    /* ══════════════ GLOBAL ══════════════ */
+    body {
+      font-family:'Jost',sans-serif;
+      background: var(--blush);
+      min-height:100vh;
+    }
+
+    @keyframes fadeUp {
+      from{opacity:0;transform:translateY(24px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    @keyframes fadeIn {
+      from{opacity:0;} to{opacity:1;}
+    }
+
+    /* ══════════════ ENVELOPE SCREEN ══════════════ */
+    #screen-envelope {
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      min-height:100vh; padding:20px;
+      background:linear-gradient(135deg,#fdeef2 0%,#fce8f4 50%,#f5e0ee 100%);
+      position:relative; overflow:hidden;
+    }
+
+    /* floating petals */
+    .petal {
+      position:absolute; border-radius:50% 0 50% 0;
+      opacity:0; pointer-events:none;
+      animation:petalFloat linear infinite;
+    }
+    @keyframes petalFloat {
+      0%  {transform:translateY(-30px) rotate(0deg);opacity:0;}
+      10% {opacity:.5;}
+      90% {opacity:.2;}
+      100%{transform:translateY(110vh) rotate(600deg);opacity:0;}
+    }
+
+    .env-hint {
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic; font-weight:300;
+      font-size:clamp(20px,5vw,28px);
+      color:var(--fuchsia); text-align:center;
+      margin-bottom:40px;
+      animation:fadeUp 1s .4s ease both;
+    }
+    .env-hint small {
+      display:block; font-family:'Jost',sans-serif;
+      font-style:normal; font-weight:200;
+      font-size:10px; letter-spacing:5px;
+      text-transform:uppercase; color:#c08090; margin-top:8px;
+    }
+
+    /* Envelope container */
+    .env-wrap {
+      cursor:pointer; position:relative;
+      animation:fadeUp 1s .8s ease both;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .env-tap-label {
+      text-align:center; margin-top:24px;
+      font-weight:200; font-size:10px; letter-spacing:4px;
+      text-transform:uppercase; color:var(--fuchsia);
+      animation:fadeUp 1s 1.4s ease both;
+    }
+
+    /* The envelope itself */
+    .envelope {
+      position:relative;
+      width:clamp(260px,75vw,400px);
+      height:clamp(170px,50vw,265px);
+      perspective:1000px;
+    }
+
+    /* envelope body */
+    .env-body {
+      position:absolute; inset:0;
+      background:linear-gradient(160deg,#fff4f8,#ffe8f0);
+      border-radius:4px 4px 6px 6px;
+      box-shadow:0 20px 60px rgba(192,21,90,0.22), 0 4px 14px rgba(192,21,90,0.1);
+      overflow:hidden;
+    }
+    /* bottom V fold */
+    .env-body::before {
+      content:'';
+      position:absolute; bottom:0; left:0; right:0; height:55%;
+      background:linear-gradient(to top, rgba(192,21,90,0.06), transparent);
+      clip-path:polygon(0 100%,50% 0%,100% 100%);
+    }
+    /* side shadows */
+    .env-body::after {
+      content:'';
+      position:absolute; inset:0;
+      background:
+        linear-gradient(to right, rgba(192,21,90,0.04) 0%, transparent 40%),
+        linear-gradient(to left,  rgba(192,21,90,0.04) 0%, transparent 40%);
+    }
+
+    /* letter peeking */
+    .env-letter {
+      position:absolute;
+      left:9%; right:9%; bottom:6px;
+      height:72%;
+      background:var(--cream);
+      border-radius:3px 3px 1px 1px;
+      box-shadow:0 -2px 10px rgba(192,21,90,0.07);
+      z-index:5;
+      display:flex; align-items:center; justify-content:center;
+      transform:translateY(0);
+      transition:transform .75s .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .env-letter-inner { text-align:center; padding:10px; opacity:0; transition:opacity .4s .6s ease; }
+    .envelope.is-open .env-letter-inner { opacity:1; }
+    .env-letter-names {
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic; font-weight:300;
+      font-size:clamp(13px,3.5vw,19px); color:var(--fuchsia);
+    }
+    .env-letter-date {
+      font-weight:200; font-size:8px; letter-spacing:4px;
+      text-transform:uppercase; color:#c08090; margin-top:3px;
+    }
+
+    /* wax seal */
+    .env-seal {
+      position:absolute;
+      bottom:calc(46% - 20px); left:50%;
+      transform:translateX(-50%);
+      width:42px; height:42px;
+      background:linear-gradient(135deg,#C0155A,#8a0f4a);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 3px 12px rgba(192,21,90,0.55), inset 0 1px 2px rgba(255,255,255,0.15);
+      z-index:25;
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic; font-size:14px; color:#fff;
+      font-weight:400; letter-spacing:-0.5px;
+      border:1.5px solid rgba(255,255,255,0.25);
+      transition:opacity .3s, transform .2s;
+    }
+
+    /* flap */
+    .env-flap {
+      position:absolute; top:0; left:0; right:0; height:54%;
+      transform-origin:top center;
+      transform-style:preserve-3d;
+      transition:transform .75s cubic-bezier(.4,0,.2,1);
+      z-index:20;
+    }
+    .env-flap-face {
+      position:absolute; inset:0;
+      clip-path:polygon(0 0,50% 100%,100% 0);
+      background:linear-gradient(160deg,#ffd8ec,#ffc8e6);
+      backface-visibility:hidden;
+    }
+    .env-flap-face::after {
+      content:'';
+      position:absolute; bottom:0; left:10%; right:10%;
+      height:1px;
+      background:linear-gradient(90deg,transparent,rgba(192,21,90,0.18),transparent);
+    }
+
+    /* OPEN state */
+    .envelope.is-open .env-flap      { transform:rotateX(-185deg); }
+    .envelope.is-open .env-seal      { opacity:0; pointer-events:none; }
+    .envelope.is-open .env-letter    { transform:translateY(-72%); }
+
+    /* burst petals */
+    .burst {
+      position:fixed; pointer-events:none; z-index:999;
+      border-radius:50% 0 50% 0;
+      animation:burstAnim .9s ease-out forwards;
+    }
+    @keyframes burstAnim {
+      0%  {opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}
+      100%{opacity:0;transform:var(--tx) rotate(var(--rot)) scale(.2);}
+    }
+
+    /* ══════════════ SAVE THE DATE SCREEN ══════════════ */
+    #screen-std {
+      display:none;
+      min-height:100vh;
+      background:var(--blush);
+      padding:20px;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    #screen-std.visible {
+      display:flex;
+      animation:fadeIn .6s ease both;
+    }
+
+    /* Back button */
+    .back-btn {
+      position:fixed; top:14px; left:14px; z-index:500;
+      background:rgba(255,255,255,.85); backdrop-filter:blur(4px);
+      border:1px solid rgba(192,21,90,.2);
+      color:var(--fuchsia); font-family:'Jost',sans-serif;
+      font-weight:300; font-size:10px; letter-spacing:3px;
+      text-transform:uppercase; padding:9px 16px;
+      border-radius:2px; cursor:pointer;
+      transition:all .2s; display:none;
+    }
+    .back-btn:hover { background:var(--fuchsia); color:#fff; }
+    .back-btn.visible { display:block; }
+
+    /* ═══ CARD (Save the Date content) ═══ */
+    .card {
+      max-width:600px; width:100%; background:var(--cream);
+      border-radius:3px; overflow:hidden;
+      box-shadow:0 12px 70px rgba(220,80,120,0.18);
+    }
+
+    /* HERO */
+    .hero {
+      position:relative;
+      background:linear-gradient(145deg,var(--coral) 0%,var(--rose) 38%,var(--fuchsia) 68%,var(--deep) 100%);
+      padding:58px 40px 48px; text-align:center; overflow:hidden;
+    }
+    .hero::before,.hero::after {
+      content:''; position:absolute; border-radius:50%;
+      border:1.5px solid rgba(255,255,255,0.13);
+    }
+    .hero::before{width:340px;height:340px;top:-110px;left:-90px;}
+    .hero::after {width:220px;height:220px;bottom:-70px;right:-50px;}
+
+    .hero-tag {
+      font-weight:200; font-size:10px; letter-spacing:6px;
+      text-transform:uppercase; color:rgba(255,255,255,.68);
+      margin-bottom:20px; display:block;
+    }
+    .hero-title {
+      font-family:'Cormorant Garamond',serif; font-style:italic;
+      font-weight:300; font-size:clamp(46px,10vw,76px);
+      line-height:1; color:#fff;
+    }
+    .hero-title span {
+      display:block; font-style:normal; font-weight:300;
+      font-size:clamp(15px,3.5vw,21px); letter-spacing:10px;
+      text-transform:uppercase; color:rgba(255,255,255,.85); margin-bottom:10px;
+    }
+    .divider-hero {
+      width:56px; height:1px; background:rgba(255,255,255,.4); margin:24px auto;
+    }
+
+    /* Countdown */
+    .countdown-wrap { margin-top:28px; }
+    .cd-heading {
+      font-weight:200; font-size:9px; letter-spacing:5px;
+      text-transform:uppercase; color:rgba(255,255,255,.55); margin-bottom:14px;
+    }
+    .countdown { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .cd-unit {
+      background:rgba(255,255,255,.11); border:1px solid rgba(255,255,255,.2);
+      border-radius:4px; padding:10px 14px; min-width:64px; text-align:center;
+    }
+    .cd-num {
+      font-family:'Cormorant Garamond',serif;
+      font-size:clamp(24px,5vw,36px); font-weight:300;
+      color:#fff; line-height:1; display:block;
+    }
+    .cd-lbl {
+      font-weight:200; font-size:8px; letter-spacing:3px;
+      text-transform:uppercase; color:rgba(255,255,255,.58);
+      margin-top:4px; display:block;
+    }
+
+    /* Body */
+    .body { padding:48px 48px 42px; text-align:center; }
+    .names {
+      font-family:'Cormorant Garamond',serif; font-style:italic;
+      font-weight:300; font-size:clamp(32px,7vw,50px); color:var(--fuchsia); line-height:1.1;
+    }
+    .tagline {
+      font-weight:200; font-size:11px; letter-spacing:5px;
+      text-transform:uppercase; color:#b08090; margin:18px 0 26px;
+    }
+    .invitation-text {
+      font-family:'Cormorant Garamond',serif; font-style:italic;
+      font-size:clamp(14px,4vw,17px); color:#7a3050; line-height:1.85;
+      margin-bottom:30px; padding:0 4px;
+    }
+
+    /* Info box */
+    .info-box {
+      background:linear-gradient(135deg,#fff0f3,#fce8f4);
+      border:1px solid rgba(200,30,100,.11); border-radius:3px;
+      padding:22px 26px; margin-bottom:28px; text-align:left;
+    }
+    .info-section-label {
+      font-weight:300; font-size:9px; letter-spacing:4px;
+      text-transform:uppercase; color:var(--coral);
+      padding-bottom:10px; margin-bottom:14px;
+      border-bottom:1px solid rgba(200,30,100,.1);
+    }
+    .info-section-label.mt { margin-top:16px; }
+    .info-row { display:flex; align-items:flex-start; gap:13px; }
+    .info-icon {
+      width:30px; height:30px;
+      background:linear-gradient(135deg,var(--coral),var(--fuchsia));
+      border-radius:50%; display:flex; align-items:center;
+      justify-content:center; flex-shrink:0; margin-top:2px;
+    }
+    .info-icon svg { width:13px; height:13px; fill:#fff; }
+    .info-text strong {
+      display:block; font-family:'Cormorant Garamond',serif;
+      font-size:17px; font-weight:400; color:#3a1020; line-height:1.2;
+    }
+    .info-text small {
+      font-weight:300; font-size:10px; letter-spacing:2px;
+      text-transform:uppercase; color:#b08090;
+    }
+    .info-text em {
+      display:block; font-style:normal; font-size:11px;
+      color:var(--fuchsia); margin-top:2px; opacity:.82;
+    }
+    .info-sep { height:1px; background:rgba(200,30,100,.08); margin:16px 0; }
+
+    /* CTA */
+    .cta-group { display:flex; flex-direction:column; align-items:center; gap:12px; }
+    .cta {
+      display:inline-block; padding:14px 38px;
+      background:linear-gradient(135deg,var(--coral),var(--rose) 50%,var(--fuchsia));
+      color:#fff; font-weight:300; font-size:11px; letter-spacing:5px;
+      text-transform:uppercase; border-radius:1px;
+      border:none; cursor:pointer; font-family:'Jost',sans-serif;
+      transition:opacity .2s;
+    }
+    .cta:hover { opacity:.84; }
+    .cta-hint {
+      font-weight:200; font-size:11px; color:#c09090;
+      font-style:italic; font-family:'Cormorant Garamond',serif;
+    }
+
+    /* Footer */
+    .footer {
+      background:linear-gradient(135deg,var(--dark),#5a1535);
+      padding:26px 40px; text-align:center;
+    }
+    .footer-text {
+      font-weight:200; font-size:10px; letter-spacing:4px;
+      text-transform:uppercase; color:rgba(255,255,255,.36); margin-bottom:8px;
+    }
+    .footer-hearts { color:var(--coral); font-size:13px; letter-spacing:6px; }
+
+    /* ═══ MODAL ═══ */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(58,16,32,.7); backdrop-filter:blur(7px);
+      z-index:1000; align-items:center; justify-content:center; padding:16px;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:var(--cream); border-radius:4px;
+      max-width:520px; width:100%; max-height:92vh; overflow-y:auto;
+      box-shadow:0 24px 80px rgba(155,19,96,.35); position:relative;
+    }
+    .modal-header {
+      background:linear-gradient(135deg,var(--rose),var(--fuchsia));
+      padding:28px 32px 22px; text-align:center; position:sticky; top:0; z-index:10;
+    }
+    .modal-close {
+      position:absolute; top:14px; right:16px;
+      background:rgba(255,255,255,.18); border:none; color:#fff;
+      width:30px; height:30px; border-radius:50%; cursor:pointer;
+      font-size:16px; display:flex; align-items:center; justify-content:center;
+    }
+    .modal-header-tag {
+      font-weight:200; font-size:9px; letter-spacing:5px;
+      text-transform:uppercase; color:rgba(255,255,255,.65); margin-bottom:7px;
+    }
+    .modal-header-title {
+      font-family:'Cormorant Garamond',serif; font-style:italic; font-size:28px; font-weight:300; color:#fff;
+    }
+    .modal-header-sub {
+      font-weight:200; font-size:10px; letter-spacing:2px;
+      text-transform:uppercase; color:rgba(255,255,255,.58); margin-top:6px;
+    }
+    .modal-body { padding:28px 30px 32px; }
+    .form-section { margin-bottom:24px; }
+    .form-section-title {
+      font-weight:300; font-size:9px; letter-spacing:4px;
+      text-transform:uppercase; color:var(--coral);
+      margin-bottom:14px; padding-bottom:8px;
+      border-bottom:1px solid rgba(200,30,100,.1);
+    }
+    .form-group { margin-bottom:13px; }
+    .form-group label {
+      display:block; font-weight:300; font-size:10px;
+      letter-spacing:2px; text-transform:uppercase; color:#7a3050; margin-bottom:6px;
+    }
+    .form-group input,.form-group textarea,.form-group select {
+      width:100%; padding:10px 13px;
+      border:1px solid rgba(200,30,100,.18); border-radius:2px;
+      background:#fff; font-family:'Jost',sans-serif; font-weight:300;
+      font-size:13px; color:#3a1020; outline:none; appearance:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus {
+      border-color:var(--fuchsia); box-shadow:0 0 0 3px rgba(192,21,90,.08);
+    }
+    .form-group textarea { min-height:78px; resize:vertical; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .radio-group { display:flex; gap:12px; flex-wrap:wrap; margin-top:4px; }
+    .radio-opt { display:flex; align-items:center; gap:7px; cursor:pointer; }
+    .radio-opt input[type="radio"] { display:none; }
+    .radio-box {
+      width:16px; height:16px; border-radius:50%;
+      border:1.5px solid rgba(192,21,90,.3); position:relative; flex-shrink:0;
+    }
+    .radio-opt input:checked~.radio-box { border-color:var(--fuchsia); background:var(--fuchsia); }
+    .radio-opt input:checked~.radio-box::after {
+      content:''; position:absolute; inset:3px; background:#fff; border-radius:50%;
+    }
+    .radio-opt span { font-weight:300; font-size:12px; color:#3a1020; }
+    .checkbox-group { display:flex; flex-direction:column; gap:9px; margin-top:4px; }
+    .check-opt { display:flex; align-items:center; gap:9px; cursor:pointer; }
+    .check-opt input[type="checkbox"] { display:none; }
+    .check-box {
+      width:16px; height:16px; border-radius:2px;
+      border:1.5px solid rgba(192,21,90,.3); position:relative; flex-shrink:0;
+    }
+    .check-opt input:checked~.check-box { background:var(--fuchsia); border-color:var(--fuchsia); }
+    .check-opt input:checked~.check-box::after {
+      content:'✓'; position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-size:10px;
+    }
+    .check-opt span { font-weight:300; font-size:12px; color:#3a1020; }
+    .submit-btn {
+      width:100%; padding:14px;
+      background:linear-gradient(135deg,var(--coral),var(--rose),var(--fuchsia));
+      color:#fff; border:none; border-radius:2px; cursor:pointer;
+      font-family:'Jost',sans-serif; font-weight:300; font-size:11px;
+      letter-spacing:5px; text-transform:uppercase; margin-top:6px;
+    }
+    .form-success { display:none; text-align:center; padding:20px 0; }
+    .form-success .s-icon { font-size:44px; margin-bottom:14px; }
+    .form-success h3 {
+      font-family:'Cormorant Garamond',serif; font-style:italic;
+      font-size:28px; color:var(--fuchsia); margin-bottom:10px;
+    }
+    .form-success p { font-weight:300; font-size:13px; color:#7a3050; line-height:1.7; }
+
+    /* RESPONSIVE */
+    @media(max-width:480px){
+      .hero{padding:42px 20px 36px;}
+      .body{padding:34px 22px 30px;}
+      .info-box{padding:18px 16px;}
+      .footer{padding:22px 20px;}
+      .cd-unit{min-width:54px;padding:8px 9px;}
+      .form-row{grid-template-columns:1fr;}
+      .modal-body{padding:20px 18px 24px;}
+      .modal-header{padding:22px 20px 18px;}
+      .invitation-text{font-size:15px; padding:0;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     ÉCRAN 1 — ENVELOPPE
+══════════════════════════════════════ -->
+<div id="screen-envelope">
+
+  <!-- Pétales flottants -->
+  <div id="petals-container"></div>
+
+  <p class="env-hint">
+    Une surprise vous attend…
+    <small>Touchez l'enveloppe pour l'ouvrir</small>
+  </p>
+
+  <div class="env-wrap" onclick="openEnvelope()" id="envWrap">
+    <div class="envelope" id="envelope">
+      <div class="env-body"></div>
+      <div class="env-letter">
+        <div class="env-letter-inner">
+          <div class="env-letter-names">Alice &amp; Rémi</div>
+          <div class="env-letter-date">22 · 05 · 2027</div>
+        </div>
+      </div>
+      <div class="env-seal">A&amp;R</div>
+      <div class="env-flap"><div class="env-flap-face"></div></div>
+    </div>
+    <p class="env-tap-label">♥ Appuyez pour ouvrir ♥</p>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     BOUTON RETOUR
+══════════════════════════════════════ -->
+<button class="back-btn" id="backBtn" onclick="goBack()">← Retour</button>
+
+<!-- ══════════════════════════════════════
+     ÉCRAN 2 — SAVE THE DATE
+══════════════════════════════════════ -->
+<div id="screen-std">
+  <div class="card">
+
+    <!-- HERO -->
+    <div class="hero">
+      <span class="hero-tag">Une date à retenir</span>
+      <div class="hero-title">
+        <span>Save the Date</span>
+        <em>22.05.2027</em>
+      </div>
+      <div class="divider-hero"></div>
+
+      <div class="countdown-wrap">
+        <p class="cd-heading">Plus que…</p>
+        <div class="countdown">
+          <div class="cd-unit"><span class="cd-num" id="cd-days">—</span><span class="cd-lbl">Jours</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cd-hours">—</span><span class="cd-lbl">Heures</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cd-mins">—</span><span class="cd-lbl">Minutes</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cd-secs">—</span><span class="cd-lbl">Secondes</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+      <div class="names">Alice &amp; Rémi</div>
+      <p class="tagline">Se disent oui</p>
+      <p class="invitation-text">
+        Nous avons le bonheur de vous annoncer notre mariage et vous invitons à bloquer cette date précieuse dans vos agendas.
+        <em style="display:block;margin-top:10px;">L'invitation officielle suivra très prochainement.</em>
+      </p>
+
+      <div class="info-box">
+        <div class="info-section-label">🏛 Cérémonie civile</div>
+        <div class="info-row">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+          </div>
+          <div class="info-text">
+            <strong>Mairie de Proville</strong>
+            <small>Cérémonie civile</small>
+            <em>Proville, Nord (59)</em>
+          </div>
+        </div>
+
+        <div class="info-sep"></div>
+
+        <div class="info-section-label mt">🥂 Vin d'honneur &amp; Soirée</div>
+        <div class="info-row">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+          </div>
+          <div class="info-text">
+            <strong>Le Louis XXI · Masnières</strong>
+            <small>Vin d'honneur &amp; Soirée</small>
+            <em>Masnières, Nord (59)</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-group">
+        <button class="cta" onclick="openModal()">Confirmer ma présence &amp; mes informations</button>
+        <p class="cta-hint">Quelques questions pour préparer votre invitation officielle ♥</p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <p class="footer-text">Invitation officielle à venir · Merci de garder cette date</p>
+      <div class="footer-hearts">♥ ♥ ♥</div>
+    </div>
+
+  </div><!-- /card -->
+</div><!-- /screen-std -->
+
+
+<!-- ══════════════════════════════════════
+     MODAL QUESTIONNAIRE
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <p class="modal-header-tag">Alice &amp; Rémi · 22.05.2027</p>
+      <div class="modal-header-title">Votre fiche invité</div>
+      <p class="modal-header-sub">Quelques infos pour vous préparer la plus belle invitation</p>
+    </div>
+    <div class="modal-body">
+      <div id="guestForm">
+
+        <div class="form-section">
+          <div class="form-section-title">👤 Vos coordonnées</div>
+          <div class="form-row">
+            <div class="form-group"><label>Prénom *</label><input type="text" id="f-prenom" placeholder="Votre prénom"/></div>
+            <div class="form-group"><label>Nom *</label><input type="text" id="f-nom" placeholder="Votre nom"/></div>
+          </div>
+          <div class="form-group"><label>Email *</label><input type="email" id="f-email" placeholder="votre@email.com"/></div>
+          <div class="form-group"><label>Téléphone</label><input type="tel" id="f-tel" placeholder="06 XX XX XX XX"/></div>
+          <div class="form-group"><label>Adresse postale complète *</label><textarea id="f-adresse" placeholder="N° et rue&#10;Code postal · Ville&#10;Pays"></textarea></div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🎉 Votre présence</div>
+          <div class="form-group">
+            <label>Venez-vous accompagné(e) ?</label>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="accompagne" value="seul"/><div class="radio-box"></div><span>Seul(e)</span></label>
+              <label class="radio-opt"><input type="radio" name="accompagne" value="couple"/><div class="radio-box"></div><span>En couple</span></label>
+              <label class="radio-opt"><input type="radio" name="accompagne" value="famille"/><div class="radio-box"></div><span>En famille</span></label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Nombre d'adultes</label>
+              <select id="f-adultes"><option value="">— Choisir —</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select>
+            </div>
+            <div class="form-group"><label>Enfants (- de 12 ans)</label>
+              <select id="f-enfants"><option value="">— Choisir —</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>À quelle(s) partie(s) assisterez-vous ?</label>
+            <div class="checkbox-group">
+              <label class="check-opt"><input type="checkbox" name="parties" value="mairie"/><div class="check-box"></div><span>Cérémonie civile – Mairie de Proville</span></label>
+              <label class="check-opt"><input type="checkbox" name="parties" value="vin"/><div class="check-box"></div><span>Vin d'honneur – Le Louis XXI, Masnières</span></label>
+              <label class="check-opt"><input type="checkbox" name="parties" value="soiree"/><div class="check-box"></div><span>Soirée – Le Louis XXI, Masnières</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🍽️ Régime alimentaire</div>
+          <div class="form-group">
+            <label>Restrictions ou allergies ?</label>
+            <div class="checkbox-group">
+              <label class="check-opt"><input type="checkbox" name="regime" value="vegetarien"/><div class="check-box"></div><span>Végétarien</span></label>
+              <label class="check-opt"><input type="checkbox" name="regime" value="vegan"/><div class="check-box"></div><span>Vegan</span></label>
+              <label class="check-opt"><input type="checkbox" name="regime" value="sansgluten"/><div class="check-box"></div><span>Sans gluten</span></label>
+              <label class="check-opt"><input type="checkbox" name="regime" value="allergie"/><div class="check-box"></div><span>Allergie spécifique (préciser ci-dessous)</span></label>
+              <label class="check-opt"><input type="checkbox" name="regime" value="aucune"/><div class="check-box"></div><span>Aucune restriction</span></label>
+            </div>
+          </div>
+          <div class="form-group"><label>Précisions</label><input type="text" id="f-allergie" placeholder="Ex : allergie aux fruits à coque…"/></div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🚗 Logistique &amp; hébergement</div>
+          <div class="form-group">
+            <label>Besoin d'un hébergement à proximité ?</label>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="hebergement" value="oui"/><div class="radio-box"></div><span>Oui, merci de m'orienter</span></label>
+              <label class="radio-opt"><input type="radio" name="hebergement" value="non"/><div class="radio-box"></div><span>Non, c'est prévu</span></label>
+            </div>
+          </div>
+          <div class="form-group"><label>Comment venez-vous ?</label>
+            <select id="f-transport">
+              <option value="">— Sélectionner —</option>
+              <option>Voiture personnelle</option>
+              <option>Train + taxi / VTC</option>
+              <option>Je cherche un covoiturage</option>
+              <option>Je propose des places en voiture</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">💌 Un mot pour les mariés</div>
+          <div class="form-group"><label>Votre message (facultatif)</label>
+            <textarea id="f-message" placeholder="Un petit mot, une chanson pour la piste de danse…" style="min-height:90px"></textarea>
+          </div>
+        </div>
+
+        <button class="submit-btn" onclick="submitForm()">Envoyer ma fiche ♥</button>
+      </div>
+
+      <div class="form-success" id="formSuccess">
+        <div class="s-icon">💌</div>
+        <h3>Merci, c'est noté !</h3>
+        <p>Vos informations ont bien été transmises.<br/>Alice &amp; Rémi vous remercient chaleureusement<br/>et ont hâte de vous retrouver le <strong>22 mai 2027</strong>. 🌸</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  /* ── Pétales ambiants ── */
+  const colors = ['#FF6B6B','#E8365D','#C0155A','#ffb3c6','#ffd6e7','#ff9ab5'];
+  const pc = document.getElementById('petals-container');
+  for(let i=0;i<16;i++){
+    const p=document.createElement('div');
+    p.className='petal';
+    const size=8+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}%;width:${size}px;height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${7+Math.random()*7}s;animation-delay:${Math.random()*9}s;`;
+    pc.appendChild(p);
+  }
+
+  /* ── Open envelope ── */
+  let opened=false;
+  function openEnvelope(){
+    if(opened)return;
+    opened=true;
+    document.getElementById('envelope').classList.add('is-open');
+    // burst
+    setTimeout(()=>{
+      const cx=window.innerWidth/2, cy=window.innerHeight/2;
+      for(let i=0;i<20;i++){
+        const b=document.createElement('div');
+        b.className='burst';
+        const size=8+Math.random()*14;
+        const angle=(i/20)*360+Math.random()*18;
+        const dist=70+Math.random()*180;
+        const rad=angle*Math.PI/180;
+        b.style.cssText=`
+          left:${cx-size/2}px;top:${cy-size/2}px;
+          width:${size}px;height:${size}px;
+          background:${colors[Math.floor(Math.random()*colors.length)]};
+          --tx:translate(${Math.cos(rad)*dist}px,${Math.sin(rad)*dist-50}px);
+          --rot:${Math.random()*720-360}deg;
+          animation-delay:${Math.random()*0.2}s;`;
+        document.body.appendChild(b);
+        setTimeout(()=>b.remove(),1200);
+      }
+    },450);
+    // reveal STD
+    setTimeout(()=>{
+      document.getElementById('screen-envelope').style.display='none';
+      const std=document.getElementById('screen-std');
+      std.classList.add('visible');
+      document.getElementById('backBtn').classList.add('visible');
+      startCountdown();
+    },1100);
+  }
+
+  function goBack(){
+    document.getElementById('screen-std').classList.remove('visible');
+    document.getElementById('screen-std').style.display='';
+    document.getElementById('backBtn').classList.remove('visible');
+    document.getElementById('screen-envelope').style.display='flex';
+    setTimeout(()=>{
+      opened=false;
+      document.getElementById('envelope').classList.remove('is-open');
+    },400);
+  }
+
+  /* ── Countdown ── */
+  let countdownStarted=false;
+  function startCountdown(){
+    if(countdownStarted)return;
+    countdownStarted=true;
+    const wedding=new Date('2027-05-22T14:00:00');
+    function tick(){
+      const diff=wedding-new Date();
+      if(diff<=0)return;
+      const d=Math.floor(diff/86400000);
+      const h=Math.floor((diff%86400000)/3600000);
+      const m=Math.floor((diff%3600000)/60000);
+      const s=Math.floor((diff%60000)/1000);
+      document.getElementById('cd-days').textContent=String(d).padStart(2,'0');
+      document.getElementById('cd-hours').textContent=String(h).padStart(2,'0');
+      document.getElementById('cd-mins').textContent=String(m).padStart(2,'0');
+      document.getElementById('cd-secs').textContent=String(s).padStart(2,'0');
+    }
+    tick(); setInterval(tick,1000);
+  }
+
+  /* ── Modal ── */
+  function openModal(){ document.getElementById('modalOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; }
+  function handleOverlayClick(e){ if(e.target.id==='modalOverlay')closeModal(); }
+
+  /* ── Form ── */
+  async function submitForm(){
+    const req={'f-prenom':'Prénom','f-nom':'Nom','f-email':'Email','f-adresse':'Adresse'};
+    let ok=true;
+    Object.keys(req).forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el.value.trim()){el.style.borderColor='#E8365D';ok=false;}
+      else el.style.borderColor='';
+    });
+    if(!ok){alert('Merci de remplir les champs obligatoires (*)');return;}
+
+    const btn=document.querySelector('.submit-btn');
+    btn.textContent='Envoi en cours…';
+    btn.disabled=true;
+
+    const data={
+      Prénom:          document.getElementById('f-prenom').value,
+      Nom:             document.getElementById('f-nom').value,
+      Email:           document.getElementById('f-email').value,
+      Téléphone:       document.getElementById('f-tel').value,
+      Adresse:         document.getElementById('f-adresse').value,
+      Accompagnement:  document.querySelector('input[name="accompagne"]:checked')?.value||'—',
+      Adultes:         document.getElementById('f-adultes').value||'—',
+      Enfants:         document.getElementById('f-enfants').value||'—',
+      Parties:         [...document.querySelectorAll('input[name="parties"]:checked')].map(x=>x.value).join(', ')||'—',
+      Régime:          [...document.querySelectorAll('input[name="regime"]:checked')].map(x=>x.value).join(', ')||'—',
+      Allergie:        document.getElementById('f-allergie').value||'—',
+      Hébergement:     document.querySelector('input[name="hebergement"]:checked')?.value||'—',
+      Transport:       document.getElementById('f-transport').value||'—',
+      Message:         document.getElementById('f-message').value||'—',
+    };
+
+    try {
+      const res = await fetch('https://formspree.io/f/mzdwedwo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if(res.ok){
+        document.getElementById('guestForm').style.display='none';
+        document.getElementById('formSuccess').style.display='block';
+      } else {
+        btn.textContent='Envoyer ma fiche ♥';
+        btn.disabled=false;
+        alert('Une erreur est survenue, merci de réessayer.');
+      }
+    } catch(e){
+      btn.textContent='Envoyer ma fiche ♥';
+      btn.disabled=false;
+      alert('Problème de connexion, merci de réessayer.');
+    }
+  }
+</script>
+</body>
+</html>
